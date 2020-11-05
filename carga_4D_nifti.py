@@ -213,3 +213,61 @@ parameters['outputVolume'] = volumen_salida.GetID()
 cliModule = slicer.modules.gradientanisotropicdiffusion
 cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
 #%%
+cliModule = slicer.modules.gradientanisotropicdiffusion
+n = cliModule.cliModuleLogic().CreateNode()
+for groupIndex in range(n.GetNumberOfParameterGroups()):
+    for parameterIndex in range(n.GetNumberOfParametersInGroup(groupIndex)):  
+        print('Parameter ({0}/{1}): {2} ({3})'.format(groupIndex, parameterIndex, n.GetParameterName(groupIndex, parameterIndex), n.GetParameterLabel(groupIndex, parameterIndex)))
+
+#parametros para la operacion de registro
+parameters = {}
+parameters['conductance'] = 1.0 
+parameters['numberOfIterations'] = 10
+parameters['timeStep'] = 0.05
+#volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode1')
+volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLMultiVolumeNode1')
+volumen_salida = slicer.vtkMRMLScalarVolumeNode()
+slicer.mrmlScene.AddNode(volumen_salida)
+parameters['inputVolume'] = volumen_entrada.GetID()
+parameters['outputVolume'] = volumen_salida.GetID()
+cliModule = slicer.modules.gradientanisotropicdiffusion
+cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+
+
+#%%
+escena = slicer.mrmlScene;
+volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
+imagenvtk4D = volumen4D.GetImageData()
+numero_imagenes = volumen4D.GetNumberOfFrames()
+
+
+extract1 = vtk.vtkImageExtractComponents()
+extract1.SetInputData(imagenvtk4D)
+
+
+for i in range(numero_imagenes):
+    volumenFijo = slicer.vtkMRMLScalarVolumeNode();
+    
+    imagen_fija = extract1.SetComponents(i)
+    volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+    extract1.Update()
+    #escena.AddNode(volumenFijo)
+    
+    
+    cliModule = slicer.modules.gradientanisotropicdiffusion
+    n = cliModule.cliModuleLogic().CreateNode()
+    parameters = {}
+    parameters['conductance'] = 1.0 
+    parameters['numberOfIterations'] = 10
+    parameters['timeStep'] = 0.05
+    #volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode1')
+    volumen_entrada = volumenFijo
+    volumen_salida = slicer.vtkMRMLScalarVolumeNode()
+    slicer.mrmlScene.AddNode(volumen_salida)
+    parameters['inputVolume'] = volumen_entrada.GetID()
+    parameters['outputVolume'] = volumen_salida.GetID()
+    cliModule = slicer.modules.gradientanisotropicdiffusion
+    cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+

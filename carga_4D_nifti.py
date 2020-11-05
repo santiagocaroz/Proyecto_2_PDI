@@ -250,6 +250,7 @@ for i in range(numero_imagenes):
     volumenFijo = slicer.vtkMRMLScalarVolumeNode();
     
     imagen_fija = extract1.SetComponents(i)
+    extract1.Update()
     volumenFijo.SetAndObserveImageData(extract1.GetOutput())
     extract1.Update()
     #escena.AddNode(volumenFijo)

@@ -253,17 +253,19 @@ for i in range(numero_imagenes):
     extract1.Update()
     volumenFijo.SetAndObserveImageData(extract1.GetOutput())
     extract1.Update()
-    #escena.AddNode(volumenFijo)
+    volumenFijo.SetName("frame"+str(i))
     
+    escena.AddNode(volumenFijo)
     
+for i in range(numero_imagenes):
     cliModule = slicer.modules.gradientanisotropicdiffusion
     n = cliModule.cliModuleLogic().CreateNode()
     parameters = {}
     parameters['conductance'] = 1.0 
-    parameters['numberOfIterations'] = 10
+    parameters['numberOfIterations'] = 5
     parameters['timeStep'] = 0.05
-    #volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode1')
-    volumen_entrada = volumenFijo
+    volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode"+str(i+1))
+    #volumen_entrada = volumenFijo
     volumen_salida = slicer.vtkMRMLScalarVolumeNode()
     slicer.mrmlScene.AddNode(volumen_salida)
     parameters['inputVolume'] = volumen_entrada.GetID()

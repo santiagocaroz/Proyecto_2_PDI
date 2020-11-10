@@ -282,13 +282,35 @@ for i in range(numero_imagenes):
 
 #%%
 
+escena = slicer.mrmlScene;
+volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
+
+imagenvtk4D = volumen4D.GetImageData()
+numero_imagenes = volumen4D.GetNumberOfFrames()
+#print('imagenes: ' + str(numero_imagenes))
+
+#dimensiones
+
+#print(imagenvtk4D.GetBounds())
+
 extract1 = vtk.vtkImageExtractComponents()
 extract1.SetInputData(imagenvtk4D)
 
+#matrices de transformacion
+ras2ijk = vtk.vtkMatrix4x4()
+ijk2ras = vtk.vtkMatrix4x4()
+
+#le solicitamos al volumen original que nos devuelva sus matrices\
+volumen4D.GetRASToIJKMatrix(ras2ijk)
+volumen4D.GetIJKToRASMatrix(ijk2ras)
+
+#creo un volumen nuevo que ser\'e1 el volumen fijo a registrar\
 volumenFijo = slicer.vtkMRMLScalarVolumeNode();
+#le asigno las transformaciones
 volumenFijo.SetRASToIJKMatrix(ras2ijk)
 volumenFijo.SetIJKToRASMatrix(ijk2ras)
 
+#le asigno el volumen 3D fijo
 imagen_fija = extract1.SetComponents(0)
 extract1.Update()
 
@@ -296,6 +318,7 @@ volumenFijo.SetName('fijo')
 volumenFijo.SetAndObserveImageData(extract1.GetOutput())
 extract1.Update()
 
+#anado el nuevo volumen a la escena\
 escena.AddNode(volumenFijo)
 
 
@@ -308,18 +331,14 @@ for i in range(numero_imagenes-1):
     volumenMovil.SetAndObserveImageData(extract1.GetOutput())
     volumenMovil.SetName('movil'+str(i+1))
     escena.AddNode(volumenMovil)
-
-
     transformadaSalida = slicer.vtkMRMLLinearTransformNode()
     transformadaSalida.SetName('Transformada de registro')
-    slicer.mrmlScene.AddNode(transformadaSalida)
-    
+    slicer.mrmlScene.AddNode(transformadaSalida)   
     parameters = {}
     parameters['fixedVolume'] = volumenFijo.GetID()
     parameters['movingVolume'] = volumenMovil.GetID()
     parameters['transformType'] = 'Rigid'
-    parameters['outputTransform'] = transformadaSalida.GetID()
-    
+    parameters['outputTransform'] = transformadaSalida.GetID()    
     cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
 
 

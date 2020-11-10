@@ -90,6 +90,7 @@
 #%%
 
 #fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
+fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
 
 """Try to read a 4D nifti file as a multivolume"""
 print('trying to read %s' % fileName)
@@ -305,7 +306,7 @@ for i in range(numero_imagenes-1):
     volumenMovil.SetRASToIJKMatrix(ras2ijk)
     volumenMovil.SetIJKToRASMatrix(ijk2ras)
     volumenMovil.SetAndObserveImageData(extract1.GetOutput())
-    volumenMovil.SetName('movil')
+    volumenMovil.SetName('movil'+str(i+1))
     escena.AddNode(volumenMovil)
 
 

@@ -245,6 +245,8 @@ numero_imagenes = volumen4D.GetNumberOfFrames()
 extract1 = vtk.vtkImageExtractComponents()
 extract1.SetInputData(imagenvtk4D)
 
+ras2ijk = vtk.vtkMatrix4x4()
+ijk2ras = vtk.vtkMatrix4x4()
 
 for i in range(numero_imagenes):
     volumenFijo = slicer.vtkMRMLScalarVolumeNode();
@@ -254,7 +256,8 @@ for i in range(numero_imagenes):
     volumenFijo.SetAndObserveImageData(extract1.GetOutput())
     extract1.Update()
     volumenFijo.SetName("frame"+str(i))
-    
+    # volumenFijo.SetRASToIJKMatrix(ras2ijk)
+    # volumenFijo.SetIJKToRASMatrix(ijk2ras)
     escena.AddNode(volumenFijo)
     
 for i in range(numero_imagenes):

@@ -247,7 +247,8 @@ extract1.SetInputData(imagenvtk4D)
 
 ras2ijk = vtk.vtkMatrix4x4()
 ijk2ras = vtk.vtkMatrix4x4()
-
+volumen4D.GetRASToIJKMatrix(ras2ijk)
+volumen4D.GetIJKToRASMatrix(ijk2ras)
 for i in range(numero_imagenes):
     volumenFijo = slicer.vtkMRMLScalarVolumeNode();
     
@@ -256,8 +257,8 @@ for i in range(numero_imagenes):
     volumenFijo.SetAndObserveImageData(extract1.GetOutput())
     extract1.Update()
     volumenFijo.SetName("frame"+str(i))
-    # volumenFijo.SetRASToIJKMatrix(ras2ijk)
-    # volumenFijo.SetIJKToRASMatrix(ijk2ras)
+    volumenFijo.SetRASToIJKMatrix(ras2ijk)
+    volumenFijo.SetIJKToRASMatrix(ijk2ras)
     escena.AddNode(volumenFijo)
     
 for i in range(numero_imagenes):
@@ -267,7 +268,7 @@ for i in range(numero_imagenes):
     parameters['conductance'] = 1.0 
     parameters['numberOfIterations'] = 5
     parameters['timeStep'] = 0.05
-    volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode"+str(i+1))
+    volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode"+str(i+1+120))
     #volumen_entrada = volumenFijo
     volumen_salida = slicer.vtkMRMLScalarVolumeNode()
     slicer.mrmlScene.AddNode(volumen_salida)

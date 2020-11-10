@@ -88,7 +88,8 @@
 #     # Helper.SetBgFgVolumes(mvNode.GetID(),None)
     
 #%%
-fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
+
+#fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
 
 """Try to read a 4D nifti file as a multivolume"""
 print('trying to read %s' % fileName)
@@ -268,7 +269,7 @@ for i in range(numero_imagenes):
     parameters['conductance'] = 1.0 
     parameters['numberOfIterations'] = 5
     parameters['timeStep'] = 0.05
-    volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode"+str(i+1+120))
+    volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode"+str(i+1))
     #volumen_entrada = volumenFijo
     volumen_salida = slicer.vtkMRMLScalarVolumeNode()
     slicer.mrmlScene.AddNode(volumen_salida)
@@ -276,5 +277,48 @@ for i in range(numero_imagenes):
     parameters['outputVolume'] = volumen_salida.GetID()
     cliModule = slicer.modules.gradientanisotropicdiffusion
     cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+
+#%%
+
+extract1 = vtk.vtkImageExtractComponents()
+extract1.SetInputData(imagenvtk4D)
+
+volumenFijo = slicer.vtkMRMLScalarVolumeNode();
+volumenFijo.SetRASToIJKMatrix(ras2ijk)
+volumenFijo.SetIJKToRASMatrix(ijk2ras)
+
+imagen_fija = extract1.SetComponents(0)
+extract1.Update()
+
+volumenFijo.SetName('fijo')
+volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+extract1.Update()
+
+escena.AddNode(volumenFijo)
+
+
+for i in range(numero_imagenes-1):
+    imagen_movil = extract1.SetComponents(i+1) #Seleccionamos un volumen lejano
+    extract1.Update()
+    volumenMovil = slicer.vtkMRMLScalarVolumeNode();
+    volumenMovil.SetRASToIJKMatrix(ras2ijk)
+    volumenMovil.SetIJKToRASMatrix(ijk2ras)
+    volumenMovil.SetAndObserveImageData(extract1.GetOutput())
+    volumenMovil.SetName('movil')
+    escena.AddNode(volumenMovil)
+
+
+    transformadaSalida = slicer.vtkMRMLLinearTransformNode()
+    transformadaSalida.SetName('Transformada de registro')
+    slicer.mrmlScene.AddNode(transformadaSalida)
+    
+    parameters = {}
+    parameters['fixedVolume'] = volumenFijo.GetID()
+    parameters['movingVolume'] = volumenMovil.GetID()
+    parameters['transformType'] = 'Rigid'
+    parameters['outputTransform'] = transformadaSalida.GetID()
+    
+    cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
 
 

@@ -279,7 +279,7 @@ for i in range(numero_imagenes):
     cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
 
 
-#%%
+#%% Registro
 
 escena = slicer.mrmlScene;
 volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
@@ -364,7 +364,7 @@ parameters['outputVolume'] = volumen_salida.GetID()
 cliModule = slicer.modules.simpleregiongrowingsegmentation
 cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
 
-#%% Es necesario hacer la segmentación de un volumen primero 
+#%% para encontrar el promedio de la intensidad es necesario hacer la segmentación de un volumen primero para obtener el lebelmapvolume, 
 import numpy
 # volume = array('4D')#se especifica el volumen que se usará 
 label = array('LabelMapVolume')#se especifica la region segmentada

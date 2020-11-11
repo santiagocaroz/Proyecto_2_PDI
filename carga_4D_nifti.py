@@ -89,8 +89,8 @@
     
 #%%
 
-#fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
-fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
+fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
+#fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
 
 """Try to read a 4D nifti file as a multivolume"""
 print('trying to read %s' % fileName)
@@ -252,8 +252,7 @@ ijk2ras = vtk.vtkMatrix4x4()
 volumen4D.GetRASToIJKMatrix(ras2ijk)
 volumen4D.GetIJKToRASMatrix(ijk2ras)
 for i in range(numero_imagenes):
-    volumenFijo = slicer.vtkMRMLScalarVolumeNode();
-    
+    volumenFijo = slicer.vtkMRMLScalarVolumeNode();    
     imagen_fija = extract1.SetComponents(i)
     extract1.Update()
     volumenFijo.SetAndObserveImageData(extract1.GetOutput())
@@ -341,4 +340,79 @@ for i in range(numero_imagenes-1):
     parameters['outputTransform'] = transformadaSalida.GetID()    
     cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
 
+#%%
+#parametros para la operacion de segmentado para un solo volumen 
+parameters = {}
+parameters['smoothingIterations'] = 5.0 
+parameters['timestep'] = 0.0625
 
+parameters['iterations'] = 5
+parameters['multiplier'] = 2.5
+parameters['neighborhood'] = 1
+parameters['labelvalue'] = 2
+
+fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el nodo que se va a usar
+parameters['seed'] = fiducials.GetID()
+
+volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode58')#se especficia el volumen que se va a usar 
+parameters['inputVolume'] = volumen_entrada.GetID()
+
+volumen_salida = slicer.vtkMRMLLabelMapVolumeNode()
+slicer.mrmlScene.AddNode(volumen_salida)
+parameters['outputVolume'] = volumen_salida.GetID()
+
+cliModule = slicer.modules.simpleregiongrowingsegmentation
+cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+#%% Es necesario hacer la segmentación de un volumen primero 
+import numpy
+# volume = array('4D')#se especifica el volumen que se usará 
+label = array('LabelMapVolume')#se especifica la region segmentada
+points  = numpy.where( label == 2 )  # or use another label number depending on what you segmented
+# values  = volume[points] # this will be a list of the label values
+# vprint(values.mean())
+
+escena = slicer.mrmlScene;
+volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
+
+imagenvtk4D = volumen4D.GetImageData()
+numero_imagenes = volumen4D.GetNumberOfFrames()
+eje_x=numpy.array(range(numero_imagenes))
+data=numpy.zeros(())
+for i in range(numero_imagenes): #obtiene todos los volumenes 
+    volumenFijo = slicer.vtkMRMLScalarVolumeNode();    
+    imagen_fija = extract1.SetComponents(i)
+    extract1.Update()
+    volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+    extract1.Update()
+    volumenFijo.SetName("frame"+str(i))
+    volumenFijo.SetRASToIJKMatrix(ras2ijk)
+    volumenFijo.SetIJKToRASMatrix(ijk2ras)
+    escena.AddNode(volumenFijo)
+
+prom=numpy.array([])
+
+for i in range(numero_imagenes):
+    volume=array("frame"+str(i))
+    values = volume[points]
+    prom=numpy.append(prom,values.mean())
+
+    
+#plot(narray, xColumnIndex=-1, columnNames=None, title=None, show=True, nodes=None)
+##:param narray: input numpy array containing data series in columns.
+#:param xColumnIndex: index of column that will be used as x axis.
+#If it is set to negative number (by default) then row index will be used as x coordinate.
+#:param columnNames: names of each column of the input array.
+#:param title: title of the chart. Plot node names are set based on this value.
+#:param nodes: plot chart, table, and list of plot series nodes.
+#Specified in a dictionary, with keys: 'chart', 'table', 'series'.
+#Series contains a list of plot series nodes (one for each table column).
+#The parameter is used both as an input and output.
+#:return: plot chart node. Plot chart node provides access to chart properties and plot series nodes
+chartNode = slicer.util.plot((eje_x,prom), xColumnIndex=0, columnNames=['X', 'X^2'])
+chartNode.SetXAxisTitle('X')
+chartNode.SetYAxisTitle('Y')
+chartNode.LegendVisibilityOff()
+chartNode.SetTitle('Prueba')
+
+    

@@ -89,8 +89,8 @@
     
 #%%
 
-fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
-#fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
+#fileName = "C:/Users/CarlosJoseMunoz/Desktop/semestres/2020-2/PDI/Proyecto_2/luimarcarcar/4D.hdr"
+fileName = "C:/Users/Santiago Caro/Documents/Santiago Consultas/Bioingenieria/Procesamiento Digital de Imagenes/Slicer/luimarcarcar/4D.hdr"
 
 """Try to read a 4D nifti file as a multivolume"""
 print('trying to read %s' % fileName)
@@ -351,7 +351,7 @@ parameters['multiplier'] = 2.5
 parameters['neighborhood'] = 1
 parameters['labelvalue'] = 2
 
-fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el nodo que se va a usar
+fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el fiducial que se va a usar
 parameters['seed'] = fiducials.GetID()
 
 volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode58')#se especficia el volumen que se va a usar 

@@ -351,7 +351,7 @@ parameters['multiplier'] = 2.5
 parameters['neighborhood'] = 1
 parameters['labelvalue'] = 2
 
-fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el fiducial que se va a usar
+fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode2')#Se especifíca el fiducial que se va a usar
 parameters['seed'] = fiducials.GetID()
 
 volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode58')#se especficia el volumen que se va a usar 

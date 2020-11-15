@@ -190,7 +190,7 @@ for i in range(numero_imagenes-1):
     parameters['outputTransform'] = transformadaSalida.GetID()    
     cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
 
-#%%
+#%% Segmentación
 #parametros para la operacion de segmentado para un solo volumen 
 parameters = {}
 parameters['smoothingIterations'] = 5.0 
@@ -213,3 +213,142 @@ parameters['outputVolume'] = volumen_salida.GetID()
 
 cliModule = slicer.modules.simpleregiongrowingsegmentation
 cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+#%% Grafica
+# para encontrar el promedio de la intensidad es necesario hacer la segmentación de un volumen primero para obtener el lebelmapvolume, 
+import numpy
+label = array('LabelMapVolume')#se especifica la region segmentada
+points  = numpy.where( label == 2 )  # or use another label number depending on what you segmented
+
+
+escena = slicer.mrmlScene;
+volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
+
+imagenvtk4D = volumen4D.GetImageData()
+numero_imagenes = volumen4D.GetNumberOfFrames()
+eje_x=numpy.array(range(numero_imagenes))
+data=numpy.zeros(())
+for i in range(numero_imagenes): #obtiene todos los volumenes 
+    volumenFijo = slicer.vtkMRMLScalarVolumeNode();    
+    imagen_fija = extract1.SetComponents(i)
+    extract1.Update()
+    volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+    extract1.Update()
+    volumenFijo.SetName("frame"+str(i))
+    volumenFijo.SetRASToIJKMatrix(ras2ijk)
+    volumenFijo.SetIJKToRASMatrix(ijk2ras)
+    escena.AddNode(volumenFijo)
+
+prom=numpy.array([])
+
+for i in range(numero_imagenes):
+    volume=array("frame"+str(i))
+    values = volume[points]
+    prom=numpy.append(prom,values.mean())
+
+chartNode = slicer.util.plot((eje_x,prom), xColumnIndex=0, columnNames=['X', 'X^2'])
+chartNode.SetXAxisTitle('X')
+chartNode.SetYAxisTitle('Y')
+chartNode.LegendVisibilityOff()
+chartNode.SetTitle('Prueba')
+
+
+#%% Prueba para un solo frame
+
+escena = slicer.mrmlScene;
+volumen4D = escena.GetNodeByID('vtkMRMLMultiVolumeNode1')
+imagenvtk4D = volumen4D.GetImageData()
+numero_imagenes = volumen4D.GetNumberOfFrames()
+
+
+extract1 = vtk.vtkImageExtractComponents()
+extract1.SetInputData(imagenvtk4D)
+
+ras2ijk = vtk.vtkMatrix4x4()
+ijk2ras = vtk.vtkMatrix4x4()
+volumen4D.GetRASToIJKMatrix(ras2ijk)
+volumen4D.GetIJKToRASMatrix(ijk2ras)
+
+volumenFijo = slicer.vtkMRMLScalarVolumeNode();    
+imagen_fija = extract1.SetComponents(50)
+extract1.Update()
+volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+extract1.Update()
+volumenFijo.SetName("frame"+str(50))
+volumenFijo.SetRASToIJKMatrix(ras2ijk)
+volumenFijo.SetIJKToRASMatrix(ijk2ras)
+escena.AddNode(volumenFijo)
+
+
+cliModule = slicer.modules.gradientanisotropicdiffusion
+n = cliModule.cliModuleLogic().CreateNode()
+parameters = {}
+parameters['conductance'] = 1.5
+parameters['numberOfIterations'] = 10
+parameters['timeStep'] = 0.05
+volumen_entrada = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode1")
+#volumen_entrada = volumenFijo
+volumen_salida = slicer.vtkMRMLScalarVolumeNode()
+slicer.mrmlScene.AddNode(volumen_salida)
+parameters['inputVolume'] = volumen_entrada.GetID()
+parameters['outputVolume'] = volumen_salida.GetID()
+cliModule = slicer.modules.gradientanisotropicdiffusion
+cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+
+volumenFijo = slicer.vtkMRMLScalarVolumeNode();
+#le asigno las transformaciones
+volumenFijo.SetRASToIJKMatrix(ras2ijk)
+volumenFijo.SetIJKToRASMatrix(ijk2ras)
+
+#le asigno el volumen 3D fijo
+imagen_fija = extract1.SetComponents(0)
+extract1.Update()
+
+volumenFijo.SetName('fijo')
+volumenFijo.SetAndObserveImageData(extract1.GetOutput())
+extract1.Update()
+
+#anado el nuevo volumen a la escena\
+escena.AddNode(volumenFijo)
+
+
+imagen_movil = slicer.mrmlScene.GetNodeByID("vtkMRMLScalarVolumeNode2")#Seleccionamos un volumen lejano
+    
+volumenMovil = slicer.vtkMRMLScalarVolumeNode();
+volumenMovil.SetRASToIJKMatrix(ras2ijk)
+volumenMovil.SetIJKToRASMatrix(ijk2ras)
+volumenMovil.SetAndObserveImageData(imagen_movil.GetImageData())
+volumenMovil.SetName('movil'+str(i+1))
+escena.AddNode(volumenMovil)
+transformadaSalida = slicer.vtkMRMLLinearTransformNode()
+transformadaSalida.SetName('Transformada de registro')
+slicer.mrmlScene.AddNode(transformadaSalida)   
+parameters = {}
+parameters['fixedVolume'] = volumenFijo.GetID()
+parameters['movingVolume'] = volumenMovil.GetID()
+parameters['transformType'] = 'BSpline'
+parameters['outputTransform'] = transformadaSalida.GetID()    
+cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
+
+    
+parameters = {}
+parameters['smoothingIterations'] = 5.0 
+parameters['timestep'] = 0.0625
+
+parameters['iterations'] = 5
+parameters['multiplier'] = 2.5
+parameters['neighborhood'] = 1
+parameters['labelvalue'] = 2
+
+fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el fiducial que se va a usar
+parameters['seed'] = fiducials.GetID()
+
+volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode4')#se especficia el volumen que se va a usar 
+parameters['inputVolume'] = volumen_entrada.GetID()
+
+volumen_salida = slicer.vtkMRMLLabelMapVolumeNode()
+slicer.mrmlScene.AddNode(volumen_salida)
+parameters['outputVolume'] = volumen_salida.GetID()
+
+cliModule = slicer.modules.simpleregiongrowingsegmentation
+

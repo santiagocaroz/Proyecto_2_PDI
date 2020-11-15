@@ -459,7 +459,7 @@ for i in range(6):
     parameters = {}
     parameters['fixedVolume'] = volumenFijo.GetID()
     parameters['movingVolume'] = volumenMovil.GetID()
-    parameters['transformType'] = 'Rigid'
+    parameters['transformType'] = 'BSpline'
     parameters['outputTransform'] = transformadaSalida.GetID()    
     cliNode = slicer.cli.run(slicer.modules.brainsfit,None,parameters, wait_for_completion=True)
     
@@ -474,13 +474,19 @@ parameters['labelvalue'] = 2
 
 fiducials = slicer.mrmlScene.GetNodeByID('vtkMRMLMarkupsFiducialNode1')#Se especifíca el fiducial que se va a usar
 parameters['seed'] = fiducials.GetID()
-
-volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode182')#se especficia el volumen que se va a usar 
-parameters['inputVolume'] = volumen_entrada.GetID()
-
-volumen_salida = slicer.vtkMRMLLabelMapVolumeNode()
-slicer.mrmlScene.AddNode(volumen_salida)
-parameters['outputVolume'] = volumen_salida.GetID()
-
-cliModule = slicer.modules.simpleregiongrowingsegmentation
-cliNode = slicer.cli.run(cliModule,None,parameters,wait_for_completion=True)
+for i in range(6):
+    volumen_entrada = slicer.mrmlScene.GetNodeByID('vtkMRMLScalarVolumeNode'+str(i+9))#se especficia el volumen que se va a usar 
+    parameters['inputVolume'] = volumen_entrada.GetID()
+    
+    volumen_salida = slicer.vtkMRMLLabelMapVolumeNode()
+    slicer.mrmlScene.AddNode(volumen_salida)
+    parameters['outputVolume'] = volumen_salida.GetID()
+    
+    cliModule = slicer.modules.simpleregiongrowingsegmentation
+    
+    
+cliModule = slicer.modules.brainsfit
+n = cliModule.cliModuleLogic().CreateNode()
+for groupIndex in range(n.GetNumberOfParameterGroups()):
+    for parameterIndex in range(n.GetNumberOfParametersInGroup(groupIndex)):  
+        print('Parameter ({0}/{1}): {2} ({3})'.format(groupIndex, parameterIndex, n.GetParameterName(groupIndex, parameterIndex), n.GetParameterLabel(groupIndex, parameterIndex)))
